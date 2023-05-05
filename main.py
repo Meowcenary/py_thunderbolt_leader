@@ -29,9 +29,16 @@ def get_random_colour(min_=150, max_=255) -> Tuple[int, ...]:
     """Returns a random RGB colour with each component between min_ and max_"""
     return tuple(random.choices(list(range(min_, max_)), k=3))
 
-def init_cards(num=4) -> List[CardTile]:
-    leftmost_card = CardTile(50, 100, position=(0, 0), colour=GREEN)
+def init_cards(num=5) -> List[CardTile]:
+    card_position = (0, 750)
+    leftmost_card = CardTile(150, 250, position=card_position, colour=GREEN)
     cards = [leftmost_card]
+
+    for x in range(num):
+        if x:
+            card_position = (card_position[0]+150, card_position[1])
+            leftmost_card = CardTile(150, 250, position=card_position, colour=GREEN)
+            cards.append(leftmost_card)
 
     return cards
 
@@ -66,36 +73,45 @@ def init_hexagons(num_x=3, num_y=3, flat_top=False) -> List[HexagonTile]:
     return hexagons
 
 
-def render(screen, hexagons):
-    """Renders hexagons on the screen"""
+def render(screen, hexagons, cards, selected_cards, font):
+    """Renders game objects on the screen"""
     screen.fill(BROWN)
-    for hexagon in hexagons:
-        hexagon.render(screen)
+    game_objects = hexagons + cards
+    for game_object in game_objects:
+        game_object.render(screen, font)
 
-    # draw borders around colliding hexagons and neighbours
-    mouse_pos = pygame.mouse.get_pos()
-    colliding_hexagons = [
-        hexagon for hexagon in hexagons if hexagon.collide_with_point(mouse_pos)
-    ]
-    for hexagon in colliding_hexagons:
+    # highlight colliding game objects
+    colliding_game_objects = colliding_objects(game_objects)
+    for game_object in colliding_game_objects + selected_cards:
         # for neighbour in hexagon.compute_neighbours(hexagons):
         #     neighbour.render_highlight(screen, border_colour=(100, 100, 100))
-        hexagon.render_highlight(screen, border_colour=BLACK)
+        game_object.render_highlight(screen, border_colour=BLACK)
     pygame.display.flip()
 
+def colliding_objects(g_objects):
+    mouse_pos = pygame.mouse.get_pos()
+    return [
+        g_object for g_object in g_objects if g_object.collide_with_point(mouse_pos)
+    ]
 
 def main():
     """Main function"""
     pygame.init()
+    font = pygame.font.SysFont("Arial", 12, bold=True)
     screen = pygame.display.set_mode((1000, 1000))
     clock = pygame.time.Clock()
     hexagons = init_hexagons(flat_top=False)
     cards = init_cards()
+    selected_cards = []
     terminated = False
     while not terminated:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminated = True
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                colliding_cards = colliding_objects(cards)
+                if colliding_cards:
+                    selected_cards = colliding_cards
 
         for hexagon in hexagons:
             hexagon.update()
@@ -103,8 +119,7 @@ def main():
         for card in cards:
             card.update()
 
-        render(screen, hexagons)
-        render(screen, cards)
+        render(screen, hexagons, cards, selected_cards, font)
         clock.tick(50)
     pygame.display.quit()
 

@@ -64,7 +64,7 @@ class HexagonTile:
         distance = math.dist(hexagon.centre, self.centre)
         return math.isclose(distance, 2 * self.minimal_radius, rel_tol=0.05)
 
-    def render(self, screen, border_colour=(0, 0, 0)) -> None:
+    def render(self, screen, font, border_colour=(0, 0, 0)) -> None:
         """Renders the hexagon on the screen"""
         pygame.draw.polygon(screen, self.highlight_colour, self.vertices)
         pygame.draw.aalines(screen, border_colour, closed=True, points=self.vertices)
